@@ -47,14 +47,3 @@ Spring Boot REST API для системы онлайн-тестирования
 - GET /api/attempts - все попытки
 - GET /api/attempts/user/{userId} - попытки пользователя
 
-! 🎮 Запуск приложения
-
-```bash
- Клонировать репозиторий
-git clone https://github.com/YOUR_USERNAME/quiz-application.git
-
- Перейти в папку проекта
-cd quiz-application
-
- Запустить приложение
-./mvnw spring-boot:run
