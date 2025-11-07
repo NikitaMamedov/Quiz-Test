@@ -1,7 +1,12 @@
 package com.example.quiz_application.service;
 
 import com.example.quiz_application.model.Quiz;
+import com.example.quiz_application.model.Question;
+import com.example.quiz_application.model.AnswerOption;
 import com.example.quiz_application.repository.QuizRepository;
+import com.example.quiz_application.repository.QuestionRepository;
+import com.example.quiz_application.repository.AttemptRepository;
+import com.example.quiz_application.dto.QuizStatistics;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +36,12 @@ public class QuizService {
     public Quiz createQuiz(Quiz quiz) {
         return quizRepository.save(quiz);
     }
+
+    @Autowired
+    private QuestionRepository questionRepository;
+
+    @Autowired
+    private AttemptRepository attemptRepository;
 
     public Quiz updateQuiz(Long id, Quiz quizDetails) {
         return quizRepository.findById(id)
@@ -65,4 +76,57 @@ public class QuizService {
                 .map(Quiz::isEditable)
                 .orElse(false);
     }
+
+    // Добавьте эти методы в существующий QuizService.java
+
+    // Бизнес-операция 1: Получить статистику по тесту
+    public QuizStatistics getQuizStatistics(Long quizId) {
+        Quiz quiz = quizRepository.findById(quizId)
+                .orElseThrow(() -> new RuntimeException("Quiz not found"));
+
+        Long attemptCount = attemptRepository.countByQuizId(quizId);
+        Double averageScore = attemptRepository.findAverageScoreByQuizId(quizId);
+        Integer maxScore = calculateMaxScore(quiz);
+
+        return new QuizStatistics(quiz, attemptCount, averageScore, maxScore);
+    }
+
+    // Бизнес-операция 2: Клонировать тест
+    @Transactional
+    public Quiz cloneQuiz(Long quizId, String newTitle) {
+        Quiz originalQuiz = quizRepository.findById(quizId)
+                .orElseThrow(() -> new RuntimeException("Quiz not found"));
+
+        Quiz clonedQuiz = new Quiz(newTitle, originalQuiz.getDescription());
+        clonedQuiz.setTimeLimit(originalQuiz.getTimeLimit());
+        quizRepository.save(clonedQuiz);
+
+        // Клонируем вопросы и ответы в одной транзакции
+        for (Question originalQuestion : originalQuiz.getQuestions()) {
+            Question clonedQuestion = new Question(originalQuestion.getText(), clonedQuiz);
+            clonedQuestion.setType(originalQuestion.getType());
+            clonedQuestion.setPoints(originalQuestion.getPoints());
+            questionRepository.save(clonedQuestion);
+
+            for (AnswerOption originalOption : originalQuestion.getAnswerOptions()) {
+                AnswerOption clonedOption = new AnswerOption(
+                        originalOption.getText(),
+                        originalOption.isCorrect(),
+                        clonedQuestion
+                );
+                // Каскадно сохранится через Question
+            }
+        }
+
+        return clonedQuiz;
+    }
+
+    private Integer calculateMaxScore(Quiz quiz) {
+        return quiz.getQuestions().stream()
+                .mapToInt(Question::getPoints)
+                .sum();
+    }
 }
+
+
+

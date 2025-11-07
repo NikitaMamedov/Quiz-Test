@@ -1,7 +1,12 @@
 package com.example.quiz_application.service;
 
+import com.example.quiz_application.dto.AttemptAnalytics;
+import com.example.quiz_application.dto.QuestionAnalysis;
+import com.example.quiz_application.dto.UserComparison;
+import com.example.quiz_application.dto.UserProgress;
 import com.example.quiz_application.model.*;
 import com.example.quiz_application.repository.AttemptRepository;
+import com.example.quiz_application.repository.QuizRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -25,6 +31,9 @@ public class AttemptService {
 
     @Autowired
     private QuestionService questionService;
+
+    @Autowired
+    private QuizRepository quizRepository;
 
     public Attempt startAttempt(Long userId, Long quizId) {
         User user = userService.getUserById(userId)
@@ -113,4 +122,65 @@ public class AttemptService {
 
         return attemptRepository.save(attempt);
     }
+
+    // Бизнес-операция 3: Получить детальную аналитику попытки
+    public AttemptAnalytics getAttemptAnalytics(Long attemptId) {
+        Attempt attempt = attemptRepository.findById(attemptId)
+                .orElseThrow(() -> new RuntimeException("Attempt not found"));
+
+        int totalQuestions = attempt.getQuiz().getQuestions().size();
+        int correctAnswers = (int) attempt.getUserAnswers().stream()
+                .filter(ua -> ua.getSelectedAnswer().isCorrect())
+                .count();
+        double percentage = totalQuestions > 0 ? (correctAnswers * 100.0) / totalQuestions : 0;
+
+        // Анализ по вопросам
+        List<QuestionAnalysis> questionAnalysis = attempt.getUserAnswers().stream()
+                .map(ua -> new QuestionAnalysis(
+                        ua.getQuestion().getId(),
+                        ua.getQuestion().getText(),
+                        ua.getSelectedAnswer().isCorrect(),
+                        ua.getQuestion().getPoints()
+                ))
+                .collect(Collectors.toList());
+
+        return new AttemptAnalytics(
+                attempt.getId(), totalQuestions, correctAnswers,
+                percentage, attempt.getScore(), attempt.getMaxScore(), questionAnalysis
+        );
+    }
+
+    // Бизнес-операция 4: Сравнить результаты двух пользователей
+    public UserComparison compareUsers(Long userId1, Long userId2, Long quizId) {
+        List<Attempt> user1Attempts = attemptRepository.findTopByUserIdAndQuizIdOrderByScoreDesc(userId1, quizId);
+        List<Attempt> user2Attempts = attemptRepository.findTopByUserIdAndQuizIdOrderByScoreDesc(userId2, quizId);
+
+        Attempt bestUser1 = user1Attempts.isEmpty() ? null : user1Attempts.get(0);
+        Attempt bestUser2 = user2Attempts.isEmpty() ? null : user2Attempts.get(0);
+
+        return new UserComparison(bestUser1, bestUser2);
+    }
+
+// Бизнес-операция 5: Получить прогресс пользователя
+public UserProgress getUserProgress(Long userId) {
+    List<Attempt> userAttempts = attemptRepository.findByUserId(userId);
+
+    long totalAttempts = userAttempts.size();
+    long completedAttempts = userAttempts.stream()
+            .filter(a -> a.getStatus() == Attempt.AttemptStatus.COMPLETED)
+            .count();
+    double averageScore = userAttempts.stream()
+            .filter(a -> a.getScore() != null)
+            .mapToInt(Attempt::getScore)
+            .average()
+            .orElse(0.0);
+
+    // Самый популярный тест
+    Long favoriteQuizId = attemptRepository.findMostFrequentQuizByUserId(userId);
+    Quiz favoriteQuiz = favoriteQuizId != null ?
+            quizRepository.findById(favoriteQuizId).orElse(null) : null;
+
+    return new UserProgress(userId, totalAttempts, completedAttempts, averageScore, favoriteQuiz);
+}
+
 }

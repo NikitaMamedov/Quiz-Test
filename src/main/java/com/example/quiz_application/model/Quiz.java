@@ -13,28 +13,32 @@ public class Quiz {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String title;
 
+    @Column(length = 500)
     private String description;
 
-    @Column(nullable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(nullable = false)
     private boolean active = true;
 
-    private Integer timeLimit; // в минутах
+    @Column(name = "time_limit")
+    private Integer timeLimit;
 
     @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Question> questions = new ArrayList<>();
 
     @OneToMany(mappedBy = "quiz")
+    @JsonIgnore
     private List<Attempt> attempts = new ArrayList<>();
 
-    // Конструкторы
     public Quiz() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
@@ -80,7 +84,6 @@ public class Quiz {
     public List<Attempt> getAttempts() { return attempts; }
     public void setAttempts(List<Attempt> attempts) { this.attempts = attempts; }
 
-    // Метод для проверки, можно ли изменять тест
     public boolean isEditable() {
         return attempts.isEmpty();
     }

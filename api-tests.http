@@ -1,0 +1,152 @@
+### 📋 ТЕСТИРОВАНИЕ API QUIZ APPLICATION
+
+### 🎯 1. ПОЛЬЗОВАТЕЛИ
+
+### Получить всех пользователей
+GET http://localhost:8080/api/users
+
+### Создать пользователя
+POST http://localhost:8080/api/users
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "email": "test@example.com",
+  "firstName": "Test",
+  "lastName": "User"
+}
+
+### Получить пользователя по ID
+GET http://localhost:8080/api/users/1
+
+### Обновить пользователя
+PUT http://localhost:8080/api/users/1
+Content-Type: application/json
+
+{
+  "username": "updateduser",
+  "email": "updated@example.com",
+  "firstName": "Updated",
+  "lastName": "User"
+}
+
+### Удалить пользователя
+DELETE http://localhost:8080/api/users/1
+
+
+### 📝 2. ТЕСТЫ
+
+### Получить все тесты
+GET http://localhost:8080/api/quizzes
+
+### Создать тест
+POST http://localhost:8080/api/quizzes
+Content-Type: application/json
+
+{
+  "title": "Mathematics Test",
+  "description": "Basic mathematics quiz",
+  "timeLimit": 45
+}
+
+### Получить тест по ID
+GET http://localhost:8080/api/quizzes/1
+
+### Обновить тест
+PUT http://localhost:8080/api/quizzes/1
+Content-Type: application/json
+
+{
+  "title": "Updated Math Test",
+  "description": "Updated mathematics quiz",
+  "timeLimit": 60
+}
+
+### Удалить тест
+DELETE http://localhost:8080/api/quizzes/1
+
+
+### ❓ 3. ВОПРОСЫ
+
+### Получить все вопросы
+GET http://localhost:8080/api/questions
+
+### Создать вопрос
+POST http://localhost:8080/api/questions
+Content-Type: application/json
+
+{
+  "text": "What is 2+2?",
+  "type": "SINGLE_CHOICE",
+  "points": 1,
+  "quiz": {
+    "id": 1
+  }
+}
+
+### Получить вопрос по ID
+GET http://localhost:8080/api/questions/1
+
+### Обновить вопрос
+PUT http://localhost:8080/api/questions/1
+Content-Type: application/json
+
+{
+  "text": "What is 2+2? (Updated)",
+  "type": "SINGLE_CHOICE",
+  "points": 2
+}
+
+### Удалить вопрос
+DELETE http://localhost:8080/api/questions/1
+
+
+### 🎮 4. ПОПЫТКИ
+
+### Начать попытку тестирования
+POST http://localhost:8080/api/attempts/start
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "quizId": 1
+}
+
+### Отправить ответы (замените {attemptId} на реальный ID)
+POST http://localhost:8080/api/attempts/{{attemptId}}/submit
+Content-Type: application/json
+
+{
+  "answers": {
+    "1": 1,
+    "2": 4
+  }
+}
+
+### Завершить попытку
+POST http://localhost:8080/api/attempts/{{attemptId}}/complete
+
+### Получить все попытки
+GET http://localhost:8080/api/attempts
+
+
+### 📊 5. БИЗНЕС-ОПЕРАЦИИ
+
+### Статистика по тесту
+GET http://localhost:8080/api/analytics/quizzes/1/statistics
+
+### Клонировать тест
+POST http://localhost:8080/api/analytics/quizzes/1/clone?newTitle=Mathematics+Test+Copy
+
+### Аналитика попытки
+GET http://localhost:8080/api/analytics/attempts/1/analytics
+
+### Сравнить пользователей
+GET http://localhost:8080/api/analytics/compare-users?userId1=1&userId2=2&quizId=1
+
+### Прогресс пользователя
+GET http://localhost:8080/api/analytics/users/1/progress
+
+
+### 🗄️ 6. H2 CONSOLE (для просмотра базы данных)
+### Откройте в браузере: http://localhost:8080/h2-console
