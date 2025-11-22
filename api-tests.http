@@ -150,3 +150,100 @@ GET http://localhost:8080/api/analytics/users/1/progress
 
 ### 🗄️ 6. H2 CONSOLE (для просмотра базы данных)
 ### Откройте в браузере: http://localhost:8080/h2-console
+
+### 🔐 ТЕСТИРОВАНИЕ АУТЕНТИФИКАЦИИ И БЕЗОПАСНОСТИ
+
+### 1. Регистрация нового пользователя
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "newuser",
+  "email": "newuser@example.com",
+  "firstName": "New",
+  "lastName": "User",
+  "password": "SecurePass123!"
+}
+
+### 2. Регистрация с слабым паролем (должна вернуть ошибку)
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "weakuser",
+  "email": "weak@example.com",
+  "firstName": "Weak",
+  "lastName": "User",
+  "password": "123"
+}
+
+### 3. Регистрация с паролем без спецсимволов (должна вернуть ошибку)
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "nospecial",
+  "email": "nospecial@example.com",
+  "firstName": "No",
+  "lastName": "Special",
+  "password": "Password123"
+}
+
+### 4. Доступ к публичным endpoint без аутентификации (должен работать)
+GET http://localhost:8080/api/quizzes
+
+### 5. Доступ к health endpoint без аутентификации (должен работать)
+GET http://localhost:8080/health
+
+### 6. Попытка доступа к защищенным endpoint без аутентификации (должен вернуть 401)
+GET http://localhost:8080/api/users
+
+### 7. Доступ к защищенным endpoint с Basic Auth пользователя frog (админ)
+GET http://localhost:8080/api/users
+Authorization: Basic frog SecurePass123!
+
+### 8. Доступ к защищенным endpoint с Basic Auth пользователя trump
+GET http://localhost:8080/api/users
+Authorization: Basic trump StrongPass456!
+
+### 9. Создание теста с аутентификацией
+POST http://localhost:8080/api/quizzes
+Authorization: Basic frog SecurePass123!
+Content-Type: application/json
+
+{
+  "title": "Secure Test",
+  "description": "Test created with authentication"
+}
+
+### 10. Попытка создать тест без аутентификации (должен вернуть 401)
+POST http://localhost:8080/api/quizzes
+Content-Type: application/json
+
+{
+  "title": "Should Fail",
+  "description": "This should not work"
+}
+
+### 11. Начать попытку тестирования с аутентификацией
+POST http://localhost:8080/api/attempts/start
+Authorization: Basic frog SecurePass123!
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "quizId": 1
+}
+
+### 12. Получить аналитику с аутентификацией
+GET http://localhost:8080/api/analytics/users/1/progress
+Authorization: Basic frog SecurePass123!
+
+### 13. Попытка получить аналитику без аутентификации (должен вернуть 401)
+GET http://localhost:8080/api/analytics/users/1/progress
+
+### 14. Проверка H2 console (должен быть доступен без аутентификации)
+GET http://localhost:8080/h2-console
+
+### 15. Проверка главной страницы (должна быть доступна без аутентификации)
+GET http://localhost:8080/

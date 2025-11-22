@@ -1,9 +1,9 @@
 package com.example.quiz_application.service;
 
-
 import com.example.quiz_application.model.User;
 import com.example.quiz_application.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +16,9 @@ public class UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder; // ДОБАВИТЬ ЭТОТ ИМПОРТ
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
@@ -40,8 +43,12 @@ public class UserService {
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new RuntimeException("Email already exists: " + user.getEmail());
         }
+
+        // Пароль уже должен быть закодирован в AuthService
         return userRepository.save(user);
     }
+
+    // УДАЛИТЬ ДУБЛИРУЮЩИЙСЯ МЕТОД createUser - оставить только один!
 
     public User updateUser(Long id, User userDetails) {
         return userRepository.findById(id)
@@ -49,6 +56,19 @@ public class UserService {
                     user.setFirstName(userDetails.getFirstName());
                     user.setLastName(userDetails.getLastName());
                     user.setEmail(userDetails.getEmail());
+                    return userRepository.save(user);
+                })
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+    }
+
+    // Метод для админов - может менять роли
+    public User updateUserAsAdmin(Long id, User userDetails) {
+        return userRepository.findById(id)
+                .map(user -> {
+                    user.setFirstName(userDetails.getFirstName());
+                    user.setLastName(userDetails.getLastName());
+                    user.setEmail(userDetails.getEmail());
+                    // user.setRoles(userDetails.getRoles()); // Раскомментировать когда добавим роли
                     return userRepository.save(user);
                 })
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));

@@ -3,6 +3,7 @@ package com.example.quiz_application.service;
 import com.example.quiz_application.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,15 +22,21 @@ public class DataInitializerService implements CommandLineRunner {
     @Autowired
     private QuestionService questionService;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder; // ДОБАВИТЬ ЭТУ СТРОКУ
+
     @Override
     public void run(String... args) throws Exception {
         initializeTestData();
     }
 
     public void initializeTestData() {
-        // Создаем тестовых пользователей
-        User user1 = new User("frog", "frog@example.com", "Никита", "Мамедов");
-        User user2 = new User("trump", "trump@example.com", "Трамп", "Байден");
+        // Создаем тестовых пользователей С ПАРОЛЯМИ
+        User user1 = new User("frog", "frog@example.com", "Никита", "Мамедов",
+                passwordEncoder.encode("SecurePass123!"));
+
+        User user2 = new User("trump", "trump@example.com", "Трамп", "Байден",
+                passwordEncoder.encode("StrongPass456!"));
 
         userService.createUser(user1);
         userService.createUser(user2);
@@ -79,7 +86,8 @@ public class DataInitializerService implements CommandLineRunner {
         question3.setAnswerOptions(Arrays.asList(option3_1, option3_2, option3_3, option3_4));
 
         System.out.println("✅ Тестовые данные созданы!");
-        System.out.println("👤 Пользователи: ivanov, petrova");
+        System.out.println("👤 Пользователи: frog, trump");
+        System.out.println("🔐 Пароли: SecurePass123!, StrongPass456!");
         System.out.println("📝 Тест: History test");
         System.out.println("❓ Вопросов: 3");
     }
